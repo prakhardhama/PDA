@@ -1,0 +1,72 @@
+#include<iostream>
+#include<cstdlib>
+#include<cstdint>
+#include<unistd.h>
+#include<pthread.h>
+
+using namespace std;
+
+struct thread_data
+{
+	int thread_id;
+	string message;
+};
+
+void *PrintHello(void *threadarg)
+{
+  	struct thread_data *my_data;
+   	my_data = (struct thread_data *) threadarg;
+
+   	cout << "Thread ID : " << my_data->thread_id ;
+   	cout << " Message : " << my_data->message << endl;
+
+   	pthread_exit(NULL);
+}
+
+void *call_thread_one(void *in)
+{
+	//sleep(1);
+	cout<<"\tYou called thread one\n";
+	cout<<"\tMy name is: "<<(intptr_t)in<<"\n";
+	pthread_exit(NULL);
+}
+
+int main()
+{
+	pthread_t thread_one, thread_two;
+	struct thread_data td;
+	int rc;
+	cout<<"Start the work\n";
+	
+	cout<<"Create thread one\n";
+	int thread_id=101;
+
+	rc=pthread_create(&thread_one, NULL, call_thread_one, (void*)(intptr_t)thread_id);
+	if(rc)
+	{
+		cout<<"Error: unable to create thread, "<<rc<<endl;
+		exit(-1);
+	}
+
+	td.thread_id=102;
+	td.message="This is second thread.";	
+
+	rc = pthread_create(&thread_two, NULL, PrintHello, (void *)&td);
+	if(rc)
+	{
+		cout<<"Error: unable to create thread, "<<rc<<endl;
+		exit(-1);
+	}
+
+	//sleep(1);
+	cout<<"finished calling both threads\n";
+	cout<<"Waiting for both threads to finish the work\n";
+	
+	pthread_join(thread_one, NULL);
+	pthread_join(thread_two, NULL);
+
+	cout<<"Finish the work\n";
+	
+	pthread_exit(NULL); // wait for other threads iff main uses
+	return 0;
+}

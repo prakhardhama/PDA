@@ -1,0 +1,109 @@
+#include<iostream>
+#include<vector>
+#include<queue>
+#include<algorithm>
+#include<set>
+#include<string>
+#include<cassert>
+#include<ctime>
+#include<chrono>
+#include<iomanip>
+
+using namespace std;
+
+#define ull unsigned long long
+#define rep($, a, b) for(ull $=(a); $<(b); ++$)
+
+struct Record
+{
+	string obj;
+	set<string> attr;
+};
+
+ull N, K;
+vector<Record> records;
+
+struct Similar
+{
+	ull id1, id2;
+	double js;
+	bool operator<(const Similar &sim) const
+	{
+		bool flag=false;
+		if(js<sim.js) flag=true;
+		else if(js==sim.js && id1<sim.id1) flag=true;
+		else if(js==sim.js && id1==sim.id1 && id2==sim.id2) flag=true;
+		return flag; 
+	}	
+};
+
+priority_queue<Similar> sims;
+
+void input()
+{
+	freopen("k_similar_pair.in", "r", stdin);
+	cin>>N>>K;
+	cin.ignore();
+	string inp;
+	set<string> attrib;
+	records.resize(N);
+	int a=0;
+	while(getline(cin, inp))
+	{
+		size_t pos=inp.find(',');
+		string object=inp.substr(0, pos);
+		set<string> attrib;
+		while(pos!=string::npos)
+		{
+			inp=inp.substr(pos+1);
+			pos=inp.find(',');
+			attrib.insert(inp.substr(0, pos));
+		}
+		Record rec;
+		rec.obj=object;
+		rec.attr=attrib;
+		records[a++]=rec;
+	}
+	ull T;
+	if(N%2==0) T=(N/2)*(N-1);
+	else T=((N-1)/2)*N;
+	assert(K<=T);
+}
+
+void solve()
+{
+	double js;
+	rep(i, 0, N)
+	rep(j, i+1, N)
+	{
+		set<string> common;
+		set_intersection(records[i].attr.begin(), records[i].attr.end(), records[j].attr.begin(), 
+							records[j].attr.end(), inserter(common, common.begin()));
+		js=(double)common.size()/(records[i].attr.size()+records[j].attr.size()-common.size());
+		sims.push(Similar{i, j, js});					
+	}	
+}
+
+int main()
+{
+	cout<<"Reading Data..."<<endl;
+	input();
+	cout<<"Reading Data Complete!"<<endl;
+	
+	cout<<"Processing Data..."<<endl;
+	auto begin=chrono::high_resolution_clock::now();
+	solve();
+	auto end=chrono::high_resolution_clock::now();
+	cout<<"Processing Complete!"<<endl;
+	
+	cout<<"\nTop "<<K<<"-Similar: "<<endl;
+	rep(i, 0, K)
+	{
+		Similar s=sims.top();
+		cout<<records[s.id1].obj<<" "<<records[s.id2].obj<<": "<<s.js<<endl;
+		sims.pop();
+	}
+	
+	cout<<"\nTime in processing: "<<fixed<<chrono::duration_cast<chrono::microseconds>(end-begin).count()/1e6<<"s";
+	return 0;
+}
